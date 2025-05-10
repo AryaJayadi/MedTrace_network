@@ -1,0 +1,30 @@
+PeerOrgs:
+  - Name: PharmaCorp
+    Domain: pharmacorp.example.com
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+      SANS:
+        - localhost
+    Users:
+      Count: 1
+
+  - Name: SehatDistribusi
+    Domain: sehatdistribusi.example.com
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+      SANS:
+        - localhost
+    Users:
+      Count: 1
+
+  - Name: ApotekSehat
+    Domain: apoteksehat.example.com
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+      SANS:
+        - localhost
+    Users:
+      Count: 1
