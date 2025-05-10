@@ -1,0 +1,218 @@
+version: '3.7'
+
+volumes:
+  orderer.medtrace.com:
+  peer0.org1.medtrace.com:
+  peer0.org2.medtrace.com:
+  peer0.org3.medtrace.com:
+  peer0.org4.medtrace.com:
+
+networks:
+  medtrace_network:
+    name: fabric_medtrace
+
+services:
+  orderer.medtrace.com:
+    container_name: orderer.medtrace.com
+    image: hyperledger/fabric-orderer:latest
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
+      - ORDERER_KAFKA_VERBOSE=true # Not using Kafka, but good to have if switched
+      - ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_CLUSTER_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_OPERATIONS_LISTENADDRESS=0.0.0.0:9443 # Operations port
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:
+      - ./system-genesis-block/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+      - ./organizations/ordererOrganizations/medtrace.com/orderers/orderer.medtrace.com/msp:/var/hyperledger/orderer/msp
+      - ./organizations/ordererOrganizations/medtrace.com/orderers/orderer.medtrace.com/tls:/var/hyperledger/orderer/tls
+      - orderer.medtrace.com:/var/hyperledger/production/orderer
+    ports:
+      - "7050:7050"
+      - "9443:9443" # Operations port
+    networks:
+      - medtrace_network
+
+  peer0.org1.medtrace.com:
+    container_name: peer0.org1.medtrace.com
+    image: hyperledger/fabric-peer:latest
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=fabric_medtrace # Network name for chaincode containers
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false # Disable for production
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.org1.medtrace.com
+      - CORE_PEER_ADDRESS=peer0.org1.medtrace.com:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.org1.medtrace.com:7052 # If using separate chaincode listener
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.medtrace.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org1.medtrace.com:7051
+      - CORE_PEER_LOCALMSPID=Org1MSP
+      - CORE_OPERATIONS_LISTENADDRESS=0.0.0.0:9444 # Operations port
+      - CORE_METRICS_PROVIDER=prometheus # For operations server
+    volumes:
+      - /var/run/:/host/var/run/
+      - ./organizations/peerOrganizations/org1.medtrace.com/peers/peer0.org1.medtrace.com/msp:/etc/hyperledger/fabric/msp
+      - ./organizations/peerOrganizations/org1.medtrace.com/peers/peer0.org1.medtrace.com/tls:/etc/hyperledger/fabric/tls
+      - peer0.org1.medtrace.com:/var/hyperledger/production
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    ports:
+      - "7051:7051"
+      - "9444:9444" # Operations port
+    networks:
+      - medtrace_network
+
+  peer0.org2.medtrace.com:
+    container_name: peer0.org2.medtrace.com
+    image: hyperledger/fabric-peer:latest
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=fabric_medtrace
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.org2.medtrace.com
+      - CORE_PEER_ADDRESS=peer0.org2.medtrace.com:8051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:8051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.org2.medtrace.com:8052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:8052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org2.medtrace.com:8051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org2.medtrace.com:8051
+      - CORE_PEER_LOCALMSPID=Org2MSP
+      - CORE_OPERATIONS_LISTENADDRESS=0.0.0.0:9445
+      - CORE_METRICS_PROVIDER=prometheus
+    volumes:
+      - /var/run/:/host/var/run/
+      - ./organizations/peerOrganizations/org2.medtrace.com/peers/peer0.org2.medtrace.com/msp:/etc/hyperledger/fabric/msp
+      - ./organizations/peerOrganizations/org2.medtrace.com/peers/peer0.org2.medtrace.com/tls:/etc/hyperledger/fabric/tls
+      - peer0.org2.medtrace.com:/var/hyperledger/production
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    ports:
+      - "8051:8051"
+      - "9445:9445"
+    networks:
+      - medtrace_network
+
+  peer0.org3.medtrace.com:
+    container_name: peer0.org3.medtrace.com
+    image: hyperledger/fabric-peer:latest
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=fabric_medtrace
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.org3.medtrace.com
+      - CORE_PEER_ADDRESS=peer0.org3.medtrace.com:9051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:9051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.org3.medtrace.com:9052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org3.medtrace.com:9051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org3.medtrace.com:9051
+      - CORE_PEER_LOCALMSPID=Org3MSP
+      - CORE_OPERATIONS_LISTENADDRESS=0.0.0.0:9446
+      - CORE_METRICS_PROVIDER=prometheus
+    volumes:
+      - /var/run/:/host/var/run/
+      - ./organizations/peerOrganizations/org3.medtrace.com/peers/peer0.org3.medtrace.com/msp:/etc/hyperledger/fabric/msp
+      - ./organizations/peerOrganizations/org3.medtrace.com/peers/peer0.org3.medtrace.com/tls:/etc/hyperledger/fabric/tls
+      - peer0.org3.medtrace.com:/var/hyperledger/production
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    ports:
+      - "9051:9051"
+      - "9446:9446"
+    networks:
+      - medtrace_network
+
+  peer0.org4.medtrace.com:
+    container_name: peer0.org4.medtrace.com
+    image: hyperledger/fabric-peer:latest
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=fabric_medtrace
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.org4.medtrace.com
+      - CORE_PEER_ADDRESS=peer0.org4.medtrace.com:10051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:10051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.org4.medtrace.com:10052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:10052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org4.medtrace.com:10051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org4.medtrace.com:10051
+      - CORE_PEER_LOCALMSPID=Org4MSP
+      - CORE_OPERATIONS_LISTENADDRESS=0.0.0.0:9447
+      - CORE_METRICS_PROVIDER=prometheus
+    volumes:
+      - /var/run/:/host/var/run/
+      - ./organizations/peerOrganizations/org4.medtrace.com/peers/peer0.org4.medtrace.com/msp:/etc/hyperledger/fabric/msp
+      - ./organizations/peerOrganizations/org4.medtrace.com/peers/peer0.org4.medtrace.com/tls:/etc/hyperledger/fabric/tls
+      - peer0.org4.medtrace.com:/var/hyperledger/production
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    ports:
+      - "10051:10051"
+      - "9447:9447"
+    networks:
+      - medtrace_network
+
+  cli:
+    container_name: cli.medtrace.com
+    image: hyperledger/fabric-tools:latest
+    tty: true
+    stdin_open: true
+    environment:
+      - GOPATH=/opt/gopath
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - FABRIC_LOGGING_SPEC=INFO
+      # Default to Org1 context, can be overridden with -e flags in exec
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.org1.medtrace.com:7051
+      - CORE_PEER_LOCALMSPID=Org1MSP
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/org1.medtrace.com/peers/peer0.org1.medtrace.com/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/org1.medtrace.com/users/Admin@org1.medtrace.com/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+      - /var/run/:/host/var/run/
+      - ./organizations:/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations
+      - ./channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts
+      - ./system-genesis-block:/opt/gopath/src/github.com/hyperledger/fabric/peer/system-genesis-block
+    depends_on:
+      - orderer.medtrace.com
+      - peer0.org1.medtrace.com
+      - peer0.org2.medtrace.com
+      - peer0.org3.medtrace.com
+      - peer0.org4.medtrace.com
+    networks:
+      - medtrace_network
