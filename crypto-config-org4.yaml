@@ -1,8 +1,0 @@
-PeerOrgs:
-  - Name: Org4
-    Domain: org4.medtrace.com
-    EnableNodeOUs: true
-    Template:
-      Count: 1
-    Users:
-      Count: 1

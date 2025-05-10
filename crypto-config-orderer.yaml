@@ -1,6 +1,0 @@
-OrdererOrgs:
-  - Name: Orderer
-    Domain: medtrace.com
-    EnableNodeOUs: true
-    Specs:
-      - Hostname: orderer # This will be orderer.medtrace.com
